@@ -13,15 +13,15 @@
 
 ## 技术栈
 
-| 层级 | 技术 |
-|------|------|
-| 后端 | Hono (Cloudflare Workers) |
-| 数据库 | Cloudflare D1 (SQLite) |
-| 认证 | Cloudflare Access (Email OTP) |
-| 邮件 | MailChannels API |
-| 前端 | Vanilla JS SPA (hash 路由) |
-| 定时任务 | Worker Cron Triggers |
-| 部署 | Wrangler CLI |
+| 层级     | 技术                          |
+| -------- | ----------------------------- |
+| 后端     | Hono (Cloudflare Workers)     |
+| 数据库   | Cloudflare D1 (SQLite)        |
+| 认证     | Cloudflare Access (Email OTP) |
+| 邮件     | Cloudflare Email Sending     |
+| 前端     | Vanilla JS SPA (hash 路由)    |
+| 定时任务 | Worker Cron Triggers          |
+| 部署     | Wrangler CLI                  |
 
 ## 项目结构
 
@@ -98,17 +98,15 @@ npx wrangler d1 create subscribe-db
 npx wrangler d1 execute subscribe-db --remote --file=./migrations/0001_init.sql
 ```
 
-### 5. 配置 MailChannels 域名验证（邮件发送）
+### 5. 配置 Email Sending（邮件发送）
 
-邮件通过 MailChannels API 发送，需要添加域名 SPF 记录以通过验证。
+邮件通过 Cloudflare 内置的 Email Sending 功能发送，需要先开启 Email Routing。
 
-在 Cloudflare DNS 中添加一条 TXT 记录：
+1. 在 Cloudflare 面板中进入你的发件域名（例如 `nitai.cc`），开启 **Email Routing**
+2. 在 **Email Routing > Destination addresses** 中添加收件邮箱地址（即用户设置的提醒通知邮箱）
+3. `wrangler.jsonc` 中已配置 `send_email` binding，无需额外修改
 
-| 类型 | 名称 | 内容 |
-|------|------|------|
-| TXT | `_mailchannels` | `v=mc1 cfid=<你的域名>` |
-
-> 将 `<你的域名>` 替换为你的实际域名，例如 `v=mc1 cfid=subscribe.nitai.cc`
+> 发件地址为 `reminder@nitai.cc`，你可以在 `src/email.ts` 中修改 `SENDER` 常量。
 
 ### 6. 配置 Cloudflare Access（Email 验证）
 
@@ -146,6 +144,7 @@ npx wrangler dev
 ```
 
 > **Windows 用户注意**：如果遇到 `EPERM: operation not permitted` 错误，请先手动设置 `XDG_CONFIG_HOME` 环境变量：
+>
 > ```powershell
 > $env:XDG_CONFIG_HOME = "$pwd\.config"
 > New-Item -ItemType Directory -Force -Path "$env:XDG_CONFIG_HOME\.wrangler\registry" | Out-Null
@@ -162,45 +161,46 @@ X-Dev-User-Email: your@email.com
 
 ### subscriptions（订阅表）
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | INTEGER | 主键 |
-| user_email | TEXT | 用户邮箱 |
-| name | TEXT | 订阅名称 |
-| price | REAL | 价格 |
-| category | TEXT | 分类 |
-| expiry_date | TEXT | 到期日期 (ISO) |
-| renewable_date | TEXT | 可续费日期 (ISO) |
-| email_reminder_expiry | INTEGER | 到期提醒开关 (0/1) |
+| 字段                   | 类型    | 说明               |
+| ---------------------- | ------- | ------------------ |
+| id                     | INTEGER | 主键               |
+| user_email             | TEXT    | 用户邮箱           |
+| name                   | TEXT    | 订阅名称           |
+| price                  | REAL    | 价格               |
+| category               | TEXT    | 分类               |
+| expiry_date            | TEXT    | 到期日期 (ISO)     |
+| renewable_date         | TEXT    | 可续费日期 (ISO)   |
+| email_reminder_expiry  | INTEGER | 到期提醒开关 (0/1) |
 | email_reminder_renewal | INTEGER | 续费提醒开关 (0/1) |
-| created_at | TEXT | 创建时间 |
-| updated_at | TEXT | 更新时间 |
+| created_at             | TEXT    | 创建时间           |
+| updated_at             | TEXT    | 更新时间           |
 
 ### user_settings（用户设置表）
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| user_email | TEXT | 用户邮箱（主键） |
-| notification_email | TEXT | 通知接收邮箱 |
-| created_at | TEXT | 创建时间 |
-| updated_at | TEXT | 更新时间 |
+| 字段               | 类型 | 说明             |
+| ------------------ | ---- | ---------------- |
+| user_email         | TEXT | 用户邮箱（主键） |
+| notification_email | TEXT | 通知接收邮箱     |
+| created_at         | TEXT | 创建时间         |
+| updated_at         | TEXT | 更新时间         |
 
 ### email_logs（邮件记录表）
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | INTEGER | 主键 |
-| subscription_id | INTEGER | 关联订阅 ID |
-| user_email | TEXT | 用户邮箱 |
-| type | TEXT | 类型 (expiry / renewal) |
-| sent_at | TEXT | 发送时间 |
+| 字段            | 类型    | 说明                    |
+| --------------- | ------- | ----------------------- |
+| id              | INTEGER | 主键                    |
+| subscription_id | INTEGER | 关联订阅 ID             |
+| user_email      | TEXT    | 用户邮箱                |
+| type            | TEXT    | 类型 (expiry / renewal) |
+| sent_at         | TEXT    | 发送时间                |
 
 ## 邮件提醒逻辑
 
 - Cron 表达式：`0 0 * * *`（每天 UTC 午夜触发）
 - 到期提醒：检查开启提醒 + 到期日在 7 天内的订阅
 - 续费提醒：检查开启提醒 + 可续费日在 7 天内的订阅
-- 不跳过重复提醒：即今天符合条件就发送，不管昨天是否已发过
+- 通过 Cloudflare Email Sending binding 发送邮件，发件地址为 `src/email.ts` 中的 `SENDER` 常量
+- 收件地址需在 Cloudflare Email Routing 中设为已验证目标地址
 
 ## 环境变量
 

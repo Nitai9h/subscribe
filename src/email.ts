@@ -1,7 +1,13 @@
+import { EmailMessage } from "cloudflare:email";
+import { createMimeMessage } from "mimetext";
 import type { Subscription } from "./types";
 
-/** 通过 Cloudflare 邮件服务发送提醒邮件 */
+const SENDER = "reminder@nitai.cc";
+const SENDER_NAME = "Subscribe 订阅提醒";
+
+/** 通过 Cloudflare Email Sending 发送提醒邮件 */
 export async function sendReminderEmail(
+  seb: SendEmail,
   subscription: Subscription & { notification_email?: string | null },
   type: "expiry" | "renewal",
 ): Promise<boolean> {
@@ -30,28 +36,14 @@ export async function sendReminderEmail(
   `;
 
   try {
-    // 使用 Cloudflare Email Routing 发送邮件
-    // 通过 fetch 调用 MailChannels API（Cloudflare Workers 内置支持）
-    const resp = await fetch("https://api.mailchannels.net/tx/v1/send", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        personalizations: [{ to: [{ email: toEmail }] }],
-        from: {
-          email: "reminder-subscribe@nitai.cc",
-          name: "Subscribe 订阅提醒",
-        },
-        subject,
-        content: [
-          {
-            type: "text/html",
-            value: htmlBody,
-          },
-        ],
-      }),
-    });
+    const msg = createMimeMessage();
+    msg.setSender({ name: SENDER_NAME, addr: SENDER });
+    msg.setRecipient(toEmail);
+    msg.setSubject(subject);
+    msg.addMessage({ contentType: "text/html", data: htmlBody });
 
-    return resp.ok;
+    await seb.send(new EmailMessage(SENDER, toEmail, msg.asRaw()));
+    return true;
   } catch {
     return false;
   }

@@ -3,7 +3,9 @@
   "name": "subscribe",
   "main": "src/index.ts",
   "compatibility_date": "2025-02-11",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "assets": {
     "directory": "./public",
     "not_found_handling": "single-page-application"
@@ -12,13 +14,20 @@
     {
       "binding": "DB",
       "database_name": "subscribe-db",
-      "database_id": "your-database-id"
+      "database_id": "0a9f2111-35c0-4f40-8e7f-8f29cf1358d0"
     }
   ],
   // 每天 00:00 (UTC) 触发邮件提醒检查
   "triggers": {
-    "crons": ["0 0 * * *"]
+    "crons": [
+      "0 0 * * *"
+    ]
   },
+  "send_email": [
+    {
+      "name": "SEB"
+    }
+  ],
   "observability": {
     "enabled": true
   }

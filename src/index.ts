@@ -23,6 +23,7 @@ const COMMIT_HASH = "000000"; // 部署时由 CI 替换
 
 type Bindings = {
   DB: D1Database;
+  SEB: SendEmail;
 };
 
 type Variables = {
@@ -156,7 +157,7 @@ async function handleScheduled(env: Bindings) {
   // 到期提醒
   const expirySubs = await getSubscriptionsForExpiryReminder(env.DB);
   for (const sub of expirySubs) {
-    const sent = await sendReminderEmail(sub, "expiry");
+    const sent = await sendReminderEmail(env.SEB, sub, "expiry");
     if (sent) {
       await logEmailSent(env.DB, sub.id, sub.user_email, "expiry");
       console.log(`到期提醒已发送: ${sub.name} (${sub.user_email})`);
@@ -166,7 +167,7 @@ async function handleScheduled(env: Bindings) {
   // 续费提醒
   const renewalSubs = await getSubscriptionsForRenewalReminder(env.DB);
   for (const sub of renewalSubs) {
-    const sent = await sendReminderEmail(sub, "renewal");
+    const sent = await sendReminderEmail(env.SEB, sub, "renewal");
     if (sent) {
       await logEmailSent(env.DB, sub.id, sub.user_email, "renewal");
       console.log(`续费提醒已发送: ${sub.name} (${sub.user_email})`);
