@@ -16,10 +16,7 @@ import {
 } from "./db";
 import { sendReminderEmail } from "./email";
 import type { SubscriptionInput } from "./types";
-
-// 版本信息
-const VERSION = "1.0.0";
-const COMMIT_HASH = "000000"; // 部署时由 CI 替换
+import { VERSION, COMMIT } from "./build-info";
 
 type Bindings = {
   DB: D1Database;
@@ -51,7 +48,7 @@ app.use("*", async (c, next) => {
 // ==================== API: 用户信息 ====================
 app.get("/api/user", (c) => {
   const email = c.get("userEmail");
-  return c.json({ email, version: VERSION, commit: COMMIT_HASH });
+  return c.json({ email, version: VERSION, commit: COMMIT });
 });
 
 // ==================== API: 仪表盘统计 ====================
@@ -147,7 +144,7 @@ app.put("/api/settings", async (c) => {
 
 // ==================== 版本信息（无需认证） ====================
 app.get("/api/version", (c) => {
-  return c.json({ version: VERSION, commit: COMMIT_HASH });
+  return c.json({ version: VERSION, commit: COMMIT });
 });
 
 // ==================== Cron 触发器：邮件提醒 ====================

@@ -1,10 +1,11 @@
 {
   "name": "subscribe",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
+    "predeploy": "node scripts/generate-build-info.js",
     "deploy": "wrangler deploy",
     "db:local": "wrangler d1 execute subscribe-db --local --file=./migrations/0001_init.sql",
     "db:remote": "wrangler d1 execute subscribe-db --remote --file=./migrations/0001_init.sql"
