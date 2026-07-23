@@ -12,7 +12,10 @@ export async function sendReminderEmail(
   type: "expiry" | "renewal",
 ): Promise<boolean> {
   const toEmail = subscription.notification_email || subscription.user_email;
-  if (!toEmail) return false;
+  if (!toEmail) {
+    console.warn(`跳过 ${type} 提醒 (${subscription.name}): 无收件邮箱`);
+    return false;
+  }
 
   const isExpiry = type === "expiry";
   const dateStr = isExpiry ? subscription.expiry_date : subscription.renewable_date;
@@ -36,6 +39,7 @@ export async function sendReminderEmail(
   `;
 
   try {
+    console.log(`准备发送${typeLabel}提醒: ${subscription.name} → ${toEmail}`);
     const msg = createMimeMessage();
     msg.setSender({ name: SENDER_NAME, addr: SENDER });
     msg.setRecipient(toEmail);
@@ -44,7 +48,8 @@ export async function sendReminderEmail(
 
     await seb.send(new EmailMessage(SENDER, toEmail, msg.asRaw()));
     return true;
-  } catch {
+  } catch (e) {
+    console.error(`发送${typeLabel}提醒失败 (${subscription.name}): ${e}`);
     return false;
   }
 }

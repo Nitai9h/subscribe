@@ -154,20 +154,24 @@ async function handleScheduled(env: Bindings) {
   // 到期提醒
   const expirySubs = await getSubscriptionsForExpiryReminder(env.DB);
   for (const sub of expirySubs) {
-    const sent = await sendReminderEmail(env.SEB, sub, "expiry");
+    const s = sub as typeof sub & { notification_email: string | null };
+    console.log(`检查到期提醒: name=${s.name}, user=${s.user_email}, notify=${s.notification_email || "未设置"}`);
+    const sent = await sendReminderEmail(env.SEB, s, "expiry");
     if (sent) {
-      await logEmailSent(env.DB, sub.id, sub.user_email, "expiry");
-      console.log(`到期提醒已发送: ${sub.name} (${sub.user_email})`);
+      await logEmailSent(env.DB, s.id, s.user_email, "expiry");
+      console.log(`到期提醒已发送: ${s.name} (${s.user_email})`);
     }
   }
 
   // 续费提醒
   const renewalSubs = await getSubscriptionsForRenewalReminder(env.DB);
   for (const sub of renewalSubs) {
-    const sent = await sendReminderEmail(env.SEB, sub, "renewal");
+    const s = sub as typeof sub & { notification_email: string | null };
+    console.log(`检查续费提醒: name=${s.name}, user=${s.user_email}, notify=${s.notification_email || "未设置"}`);
+    const sent = await sendReminderEmail(env.SEB, s, "renewal");
     if (sent) {
-      await logEmailSent(env.DB, sub.id, sub.user_email, "renewal");
-      console.log(`续费提醒已发送: ${sub.name} (${sub.user_email})`);
+      await logEmailSent(env.DB, s.id, s.user_email, "renewal");
+      console.log(`续费提醒已发送: ${s.name} (${s.user_email})`);
     }
   }
 
