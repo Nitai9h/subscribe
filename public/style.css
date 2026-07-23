@@ -83,6 +83,8 @@ html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 body {
@@ -92,6 +94,11 @@ body {
   min-height: 100vh;
   line-height: 1.5;
   transition: background 0.3s ease, color 0.3s ease;
+}
+
+input,
+textarea {
+  user-select: text;
 }
 
 a {
