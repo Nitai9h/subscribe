@@ -23,9 +23,10 @@ const ICON_COLORS = [
   "#5ac8fa", "#ff2d55", "#5856d6", "#ff9f0a", "#30d158",
 ];
 
-/** 根据字符串生成稳定的颜色 */
-function getColor(str) {
+/** 根据 ID 生成稳定的颜色 */
+function getColor(id) {
   let hash = 0;
+  const str = String(id);
   for (let i = 0; i < str.length; i++) {
     hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
@@ -262,7 +263,7 @@ async function renderDashboard(main) {
                   <div class="upcoming-item-left">
                     <div class="upcoming-icon" style="background:var(--text-primary);color:${getColor(sub.id)}">${sub.name.charAt(0).toUpperCase()}</div>
                     <div class="upcoming-info">
-                      <span class="upcoming-name">${escapeHTML(sub.name)}</span>
+                      <span class="upcoming-name">${escapeHTML(sub.name.toUpperCase())}</span>
                       <span class="upcoming-category">${escapeHTML(sub.category)}</span>
                     </div>
                   </div>
@@ -309,7 +310,7 @@ function renderCalendarHTML(subs) {
       if (d.getFullYear() === calendarYear && d.getMonth() === calendarMonth) {
         const day = d.getDate();
         if (!eventMap[day]) eventMap[day] = [];
-        eventMap[day].push({ name: sub.name, color: getColor(sub.id) });
+        eventMap[day].push({ name: sub.name.toUpperCase(), color: getColor(sub.id) });
       }
     }
   });
@@ -497,7 +498,7 @@ function renderSubCard(sub) {
       <div class="sub-card-left">
         <div class="sub-icon" style="background:var(--text-primary);color:${getColor(sub.id)}">${sub.name.charAt(0).toUpperCase()}</div>
         <div class="sub-card-info">
-          <div class="sub-name">${escapeHTML(sub.name)}</div>
+          <div class="sub-name">${escapeHTML(sub.name.toUpperCase())}</div>
           <span class="sub-category-tag">${escapeHTML(sub.category)}</span>
         </div>
       </div>
